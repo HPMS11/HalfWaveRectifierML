@@ -79,10 +79,20 @@ class CircuitSimulator:
 
     def get_jac(self,x):
         # Jacobian of the non-linear element vector for Newton-Raphson solver
-        """ YOUR CODE HERE:
-        jac = ...
-        """
+
+        v1 = x[1]
+        v2 = x[2]
+
+        g = (1e-13 / 0.025) * np.exp((v1 - v2) / 0.025)
+
+        jac = np.array([
+            [0, 0, 0, 0],
+            [0, g, -g, 0],
+            [0, -g, g, 0],
+            [0, 0, 0, 0]
+        ])
         return jac
+
     def BEuler(self, x_0, delta_t, T, noise = False):
         # Get the G and C matrices
         G = self.G_mat
@@ -111,30 +121,58 @@ class CircuitSimulator:
 
     def NewtonRaphson(self, A, b, x, epsilon):
         # Iterative solver for non-linear systems
-        """ YOUR CODE HERE:
-        x = ...
-        """
-        return x
+
+        max_iter = 100
+
+        for _ in range(max_iter):
+            f = self.get_f_vect(x)
+            jac = self.get_jac(x)
+
+            F = A @ x + f - b
+            JF = A + jac
+
+            delta_x = np.linalg.solve(JF, -F)
+            x = x + delta_x
+
+            if np.linalg.norm(delta_x, ord=2) < epsilon:
+                return x
+        return x        #if max_iter is reached without error less than epsion
+    
     def getSensitivities(self, x_pred, G_mat, C_mat, R, delta_t):
         # Calculates sensitivity of nodal voltages (x) to parameters R and C
         dxdr = []
+        dxdc = []
+
         for i in range(len(x_pred)):
             jac = self.get_jac(x_pred[i])
             dGdR = self.get_dGdR(R)
-            if(i == 0):
-                # Initial sensitivity calculation
-                tempr = -dGdR@x_pred[i]
-            else:
-                # Propagation of sensitivity through time steps
-                tempr = -dGdR@x_pred[i] + (C_mat/delta_t)@dxdr[i-1]
+            dCdC = self.get_dCdC()
 
-            A = G_mat + C_mat/delta_t + jac
-            dxdr.append(np.linalg.solve(A,tempr))
-            """ YOUR CODE HERE:
-            dxdc = ...
-            """
+            # Common system matrix
+            A = G_mat + C_mat / delta_t + jac
+
+            # sensitivity with respect to R
+            if i == 0:
+                tempr = -dGdR @ x_pred[i]
+            else:
+                tempr = -dGdR @ x_pred[i] + (C_mat / delta_t) @ dxdr[i - 1]
+
+            dxdr.append(np.linalg.solve(A, tempr))
+
+            # sensitivity with respect to C
+            if i == 0:
+                tempc = -(dCdC / delta_t) @ x_pred[i]
+            else:
+                tempc = (
+                    -(dCdC / delta_t) @ x_pred[i]
+                    + (dCdC / delta_t) @ x_pred[i - 1]
+                    + (C_mat / delta_t) @ dxdc[i - 1]
+                )
+
+            dxdc.append(np.linalg.solve(A, tempc))
+
         dxdr = np.array(dxdr)
-        dxdc = np.array(dxdc)
+        dxdc = np.array(dxdc)   
         return dxdr, dxdc
 
     def GaussNewton(self, R_init, C_init, x_init, x_test, delta_t, T, max_iter = 100, noise = False):

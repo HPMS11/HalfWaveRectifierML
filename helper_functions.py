@@ -47,15 +47,16 @@ def plot_data(x_test, tpoints):
     plt.title("Voltage and Current vs. Time")
     plt.tight_layout()
     plt.show()
+
 def create_dataset(num_samples, amplitude, f, delta_t, T, noise):
     x = [] # To store the simulated transient responses (features)
     y = [] # To store the ground truth R and C values (labels)
 
     for i in range(num_samples):
         # Randomly sample resistance (1 to 5k Ohms) and capacitance (0.1 to 10 microFarads)
-        """ YOUR CODE HERE:
-        R, C = ...
-        """
+        R = 10 ** np.random.uniform(np.log10(1), np.log10(5000))
+        C = 10 ** np.random.uniform(np.log10(0.1e-6), np.log10(10e-6))
+
         # Initialize the Modified Nodal Analysis (MNA) simulator with current parameters
         mna = CircuitSimulator(amplitude, f, R, C)
         y.append([R, C])
