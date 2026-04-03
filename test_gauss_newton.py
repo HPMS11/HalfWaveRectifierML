@@ -35,8 +35,8 @@ for R_guess, C_guess in guesses:
             x_test=x_test,
             delta_t=delta_t,
             T=T,
-            max_iter=30,
-            noise=False
+            max_iter=100,
+            noise=True
         )
 
         print("--------------------------------------------------")
