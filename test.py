@@ -32,7 +32,7 @@ noisy_dataset = True     # Boolean
 mna = CircuitSimulator(amplitude, frequency, R_test, C_test)
 
 # Solve the circuit using the Backward Euler numerical integration method
-x_test, tpoints = mna.BEuler(x_init, delta_t, T, noise = True)
+x_test, tpoints = mna.BEuler(x_init, delta_t, T, noise = False)
 
 # Visualize the simulation results
 plot_data(x_test, tpoints)
