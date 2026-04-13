@@ -1,4 +1,6 @@
 import numpy as np
+import io
+from contextlib import redirect_stdout
 from circuit_simulator import CircuitSimulator
 
 # data in csv sorted as: V1, V2, V3, IE
@@ -18,33 +20,61 @@ guesses = [
     (1000.0, 1e-6),
     (2000.0, 2e-6),
     (3000.0, 5e-6),
-    (4500.0, 8e-6)
+    (4500.0, 8e-6),
+    (900, 1.67e-6)
 ]
 
 print(f"Loaded measurement data with shape: {x_test.shape}")
 print()
 
+results = []
+
 for R_guess, C_guess in guesses:
     sim = CircuitSimulator(amplitude, f, R_guess, C_guess)
 
     try:
-        R_est, C_est, cost = sim.GaussNewton(
-            R_init=R_guess,
-            C_init=C_guess,
-            x_init=x_init,
-            x_test=x_test,
-            delta_t=delta_t,
-            T=T,
-            max_iter=100,
-            noise=True
-        )
+        with redirect_stdout(io.StringIO()):
+            R_est, C_est, cost = sim.GaussNewton(
+                R_init=R_guess,
+                C_init=C_guess,
+                x_init=x_init,
+                x_test=x_test,
+                delta_t=delta_t,
+                T=T,
+                max_iter=5,
+                noise=True
+            )
 
-        print("--------------------------------------------------")
-        print(f"Initial guess: R_guess = {R_guess:.4f} ohms, C_guess = {C_guess:.4e} F")
-        print(f"Estimated:     R_est   = {R_est:.4f} ohms, C_est   = {C_est:.4e} F")
-        print(f"Final cost:    {cost:.6e}")
+        results.append([
+            f"{R_guess:.4f}",
+            f"{C_guess:.4e}",
+            f"{R_est:.4f}",
+            f"{C_est:.4e}",
+            f"{cost:.6e}",
+            "OK",
+        ])
 
     except Exception as e:
-        print("--------------------------------------------------")
-        print(f"Initial guess: R_guess = {R_guess:.4f} ohms, C_guess = {C_guess:.4e} F")
-        print(f"Failed with error: {e}")
+        results.append([
+            f"{R_guess:.4f}",
+            f"{C_guess:.4e}",
+            "-",
+            "-",
+            "-",
+            f"ERROR: {e}",
+        ])
+
+headers = ["R_guess (ohms)", "C_guess (F)", "R_est (ohms)", "C_est (F)", "Final cost", "Status"]
+widths = []
+
+for i, header in enumerate(headers):
+    column_values = [row[i] for row in results]
+    widths.append(max(len(header), *(len(value) for value in column_values)))
+
+header_row = " | ".join(header.ljust(widths[i]) for i, header in enumerate(headers))
+separator_row = "-+-".join("-" * widths[i] for i in range(len(headers)))
+
+print(header_row)
+print(separator_row)
+for row in results:
+    print(" | ".join(row[i].ljust(widths[i]) for i in range(len(headers))))
