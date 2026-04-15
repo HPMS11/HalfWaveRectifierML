@@ -1,7 +1,7 @@
 import numpy as np
 import io
 from contextlib import redirect_stdout
-from circuit_simulator import CircuitSimulator
+from group_25_circuit_simulator import CircuitSimulator
 
 # data in csv sorted as: V1, V2, V3, IE
 x_test = np.loadtxt("measurements.csv", delimiter=",")
@@ -21,7 +21,7 @@ guesses = [
     (2000.0, 2e-6),
     (3000.0, 5e-6),
     (4500.0, 8e-6),
-    (900, 1.67e-6)
+    (988.8775, 1.4015e-06)  #from GBT
 ]
 
 print(f"Loaded measurement data with shape: {x_test.shape}")
@@ -41,7 +41,7 @@ for R_guess, C_guess in guesses:
                 x_test=x_test,
                 delta_t=delta_t,
                 T=T,
-                max_iter=5,
+                max_iter=100,
                 noise=True
             )
 

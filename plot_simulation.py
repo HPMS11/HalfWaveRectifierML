@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from circuit_simulator import CircuitSimulator
+from group_25_circuit_simulator import CircuitSimulator
 
 # range for R: [1, 2500], C: [0.1e-6, 5e-6]
-R = 892.8388        # ohms
-C = 1.6883e-06     # farads
+
+R = 988.8775
+C = 1.4015e-06
+
 
 # Choose source parameters
 amplitude = 5     # volts
